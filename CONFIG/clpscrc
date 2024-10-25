@@ -1,0 +1,44 @@
+#
+# Copyright IBM Corp. 2024 - 2024
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# CLPSC env variables
+#   CLPSCDIR=<configuration directory>
+#   CLPSCDB2INST=<default Db2 instance>
+#   CLPSCDBNAME=<default database name>
+# set these variables in your user profiles to define your defaults
+
+# config directory
+#_clpsc_configdir=${HOME}/.clpsc
+
+# full path of sc
+scexecpath="$(which sc 2>/dev/null)"
+
+# awk script to convert from Db2 CLP to sc
+#tab2sc=DB2tab2sc3.awk
+#tab2sc=DB2tab2sc_v0.9.2.awk
+#tab2sc=DB2tab2sc_v0.9.3.awk
+tab2sc=DB2tab2sc_v0.9.6.awk
+
+# options for the awk script
+convopts="maxlen=1000:headerGap=1:colGap=1:freezeColNum=1:sc_macro_path=${_clpsc_configdir}/Macros"
+# options for Db2 CLP
+clpopts="-v"
+# options for sc
+#scopts="-M"
+#
+# macro settings
+#
+# tracing
+_scmacro_trc=0                                  # macro trace (0=off, 1=on)
+_scmacro_trc_dir="${_clpsc_configdir}/Logs"     # macro trace directory
+
+# SQL history
+_scmacro_histfile="${_clpsc_configdir}/SQLhistory"
+(( _scmacro_histsize = 32 ))
+
+# read in the user customisation
+if [[ -f "${_clpsc_configdir}/clpscUser" ]]; then
+  . "${_clpsc_configdir}/clpscUser"
+fi

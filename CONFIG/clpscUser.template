@@ -1,0 +1,11 @@
+#
+# Copyright IBM Corp. 2024 - 2024
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# optional settings
+#settings=/usr/local/bin/func.ksh
+
+#fixedColours="@black;@yellow|@red;@yellow"
+fixedColours="@black;@white|@white;@blue"
+convopts="${convopts}:freezeColNum=2:maxlen=10000:fixedColours=${fixedColours}"
