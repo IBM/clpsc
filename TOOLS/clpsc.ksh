@@ -7,7 +7,7 @@
 
 #set -x
 _clpsc_prog="${0##*/}"             # name of the script
-_clpsc_version="0.9.3"
+_clpsc_version="0.9.7"
 # env var CLPSCDIR indicates an alternative config directory
 _clpsc_configdir="${CLPSCDIR-${HOME}/.clpsc}"
 export _clpsc_configdir

@@ -16,10 +16,7 @@
 scexecpath="$(which sc 2>/dev/null)"
 
 # awk script to convert from Db2 CLP to sc
-#tab2sc=DB2tab2sc3.awk
-#tab2sc=DB2tab2sc_v0.9.2.awk
-#tab2sc=DB2tab2sc_v0.9.3.awk
-tab2sc=DB2tab2sc_v0.9.6.awk
+tab2sc=DB2tab2sc.awk
 
 # options for the awk script
 convopts="maxlen=1000:headerGap=1:colGap=1:freezeColNum=1:sc_macro_path=${_clpsc_configdir}/Macros"
