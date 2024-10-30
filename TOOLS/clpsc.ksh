@@ -7,7 +7,7 @@
 
 #set -x
 _clpsc_prog="${0##*/}"             # name of the script
-_clpsc_version="0.9.7"
+_clpsc_version_number="0.9.7"
 # env var CLPSCDIR indicates an alternative config directory
 _clpsc_configdir="${CLPSCDIR-${HOME}/.clpsc}"
 export _clpsc_configdir
@@ -126,6 +126,8 @@ AssignOptValue ()
                    ;;
     convopts)      set -A _clpsc_convA -- "${_clpsc_convA[@]}" `print -- "${_clpsc_convopts}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -`
                    ;;
+    tab2sc)        ;;
+    toolpath)      ;;
     options)       set -A _clpsc_optionsA -- "${_clpsc_optionsA[@]}" `print -- "${_clpsc_options}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -`
                    ;;
     scexecpath)    _clpsc_displayExe="${_clpsc_scexecpath}"
@@ -138,7 +140,8 @@ AssignOptValue ()
                      (( _clpsc_rc = 1 ))
                    fi
                    ;;
-    version)       print -- "[${_clpsc_prog}] Version: ${_clpsc_version}"
+    version)       print -- "[${_clpsc_prog}] Version: ${_clpsc_version_number}"
+                   print -- "[${_clpsc_prog}] Converter script:\n[${_clpsc_prog}]  " $(echo "dummy" | awk -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" showversion=1 -)
                    exit 0
                    ;;
     track)         _clpsc_displayExe=less

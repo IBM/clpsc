@@ -28,6 +28,27 @@ function max(a,b)
   if( a > b ){ return a }
   return b
 }
+function version(detailed)
+{
+  version_number="0.9.7"
+  if( detailed == -1 ){
+    return ""
+  } else if( detailed == 0 ){
+    return version_number
+  }
+  for( i in PROCINFO ){
+    if( i == "argv" ) {
+      for( j in PROCINFO[i] ){
+        if( PROCINFO[i][j] == "-f" ){
+          version_info = sprintf("%s version %s",PROCINFO[i][j+1],version_number)
+          # printf "> PROCINFO[%s][%d]: %s\n",i,j,PROCINFO[i][j]
+	  return version_info
+        }
+      }
+    }
+  }
+  return "error displaying the version"
+}
 function trace(level,info)
 {
   if( trc_level < level ){ return }
@@ -76,6 +97,8 @@ BEGIN{
        # set default colours
            fixedColours="@black;@white|@black;@cyan"
 	   notfixedColours="@white;@black|@cyan;@black"
+       # version - showversion=-1,0,1 : show one of (no version+continue,short version+exit,long version+exit)
+           showversion=-1
 
        # array that allows conversion of char to ASCII value
        for(i=0;i<256;i++){ ord[sprintf("%c",i)]=i }
@@ -90,6 +113,11 @@ BEGIN{
        trc_level=0
      }
 {
+  if( showversion > -1 ) {
+    print version(showversion)
+    next_action = "exit"
+    exit
+  }
   trace(1,sprintf("# linetype = \"%s\"\n",linetype))
   trace(1,sprintf("# line = \"%s\"\n",$0))
 
@@ -168,11 +196,6 @@ BEGIN{
       # remember that the header line is in z[headerRow+1]
       for(i=1;i<=NF;i++){
         a[i]=substr(z[headerRow+1],s[i],e[i])
-        if( match(a[i],/^- *$/) ){
-          t[i] = "s"                      # string NULL value
-        } else if( match(a[i],/^ *-$/) ){
-          t[i] = "i"                      # integer NULL value
-        }
         sub(/^ */,"",a[i])  # truncate leading blanks
         sub(/ *$/,"",a[i])  # truncate trailing blanks
         l[i] = length(a[i]) + colGap
@@ -246,6 +269,12 @@ BEGIN{
       for(i=1;i<=nCols+2;i++){
         # get a single value
         fld=substr(record,s[i],e[i])
+        if( match(fld,/^- *$/) ){
+          t[i] = "s"                      # string NULL value
+        } else if( match(fld,/^ *-$/) ){
+          t[i] = "i"                      # integer NULL value
+        }
+	trace(1,sprintf("tracepoint 1: fld = >%s<, t[%d] = %s\n",fld,i,t[i]))
         sub(/^ */,"",fld)      # truncate leading blanks
         sub(/ *$/,"",fld)      # truncate trailing blanks
         gsub(/\n/,CRchar,fld)  # replace CR by "\n" (or what CRchar is set to)
@@ -301,6 +330,9 @@ BEGIN{
 }
 
 END{
+     if( next_action == "exit" ){
+       exit
+     }
      # colours
      i=split(fixedColours,fColours,/\|/)
      j=split(notfixedColours,nfColours,/\|/)
@@ -424,6 +456,7 @@ END{
        if( nRows > 0 ){
          # set the format for each column
          for(i=1;i<=nCols;i++){
+	   trace(1,sprintf("tracepoint 2: t[%d] = %s\n",i,t[i]))
            switch(t[i]){
              case "i":
              case "s":             printf "format %s %d 0 0\n",num2char(i),min(min(e[i],w[2])+colGap,l[i]); break
