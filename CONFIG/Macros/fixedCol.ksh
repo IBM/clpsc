@@ -61,7 +61,7 @@ _colIBeg=$(sepCol ${_addrIBeg})
 (( _nCol = $(col2colno ${_col}) ))
 (( _nColIBeg = $(col2colno ${_colIBeg}) ))
 if [[ _nCol -gt _nColIBeg && $(sepCol ${_curUL}) != $(sepCol ${_addrIBeg}) ]]; then
-  sendCmd 'error "To freeze columns scroll to the left."'
+  errorMsg "To freeze columns scroll to the left."
   exit -1
 fi
 

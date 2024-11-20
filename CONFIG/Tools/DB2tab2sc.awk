@@ -49,6 +49,26 @@ function version(detailed)
   }
   return "error displaying the version"
 }
+function cmdline_vars(var_string)
+{
+  return_string = ""
+
+  for( j in PROCINFO["argv"] ){
+    argv_string=PROCINFO["argv"][j]
+    k = split(argv_string,argv_a,/=/)
+	if( k == 2 ){
+      if( index(argv_a[1],var_string) == 1 || var_string == "" ){
+        if( length(return_string) == 0 ){
+          return_string = argv_string
+        } else {
+          return_string = sprintf("%s:%s",return_string,argv_string)
+        }
+      }
+    }
+  }
+
+  return return_string
+}
 function trace(level,info)
 {
   if( trc_level < level ){ return }
@@ -118,6 +138,36 @@ BEGIN{
     next_action = "exit"
     exit
   }
+  # FKey definitions
+  if( NR == 1 ){
+    # get the FKey settings as fkeyX=..:fkeyY=...
+    varName = "fkey"
+    fKeyVarDefs = cmdline_vars(varName)
+    trace(1,sprintf("FKey Settings = \"%s\"\n",fKeyVarDefs))
+    # split into a field with [fkeyX=...] [fkeyY=...] ...
+    nVars = split( fKeyVarDefs,varSettings,/:/ )
+    # iterate through settings submitted
+    for( i=1;i<=nVars;i++ ){
+      # check if set to empty string
+      n = split(varSettings[i],varDef,/=/)
+      trace(1,sprintf("%d: varSettings[%d] = %s\n",i,i,varSettings[i]))
+      if( n == 1 ){
+        fKeys[substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName))] = ""
+      } else {
+        # each setting only for one fkey
+        for( j=1;j<=12;j++ ){
+          if( fKeys[j] == varDef[2] ){
+            fKeys[j] = ""
+          }
+        }
+	# save the new fkey setting in the fKeys[] array
+	# extract the number form the variable name fkey...
+        fKeys[substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName))] = varDef[2]
+	trace(1,sprintf("FKey #%d (%s): %s\n",substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName)),substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName)),varDef[2]))
+      }
+    }
+    j = 0
+  }
   trace(1,sprintf("# linetype = \"%s\"\n",linetype))
   trace(1,sprintf("# line = \"%s\"\n",$0))
 
@@ -165,7 +215,7 @@ BEGIN{
         s[i] = len+1
         e[i] = length($i)
         len = len+1+length($i)
-        trace(1,sprintf("# Db2 CLP length of field %d = %d\n",i,e[i]))
+        trace(2,sprintf("# Db2 CLP length of field %d = %d\n",i,e[i]))
       }
       if( diagCol == 1 ){
         e[nCols+1] = 3
@@ -274,7 +324,7 @@ BEGIN{
         } else if( match(fld,/^ *-$/) ){
           t[i] = "i"                      # integer NULL value
         }
-	trace(1,sprintf("tracepoint 1: fld = >%s<, t[%d] = %s\n",fld,i,t[i]))
+	trace(2,sprintf("tracepoint 1: fld = >%s<, t[%d] = %s\n",fld,i,t[i]))
         sub(/^ */,"",fld)      # truncate leading blanks
         sub(/ *$/,"",fld)      # truncate trailing blanks
         gsub(/\n/,CRchar,fld)  # replace CR by "\n" (or what CRchar is set to)
@@ -342,21 +392,26 @@ END{
        fColours[1] = "@black;@white"
        fColours[2] = "@black;@cyan"
      }
-     print "set color"
+     print  "set color"
      printf "color 1 = %s\n",nfColours[1]
-     print "color 2 = @white;@blue"
+     print  "color 2 = @white;@blue"
      printf "color 3 = %s\n",nfColours[2]
-     print "color 4 = @yellow;@blue"
+     print  "color 4 = @yellow;@blue"
      printf "color 5 = %s\n",fColours[1]
      printf "color 6 = %s\n",fColours[2]
-     print "color 7 = @red;@cyan"
-     print "color 8 = @red;@green"
+     print  "color 7 = @red;@cyan"
+     print  "color 8 = @red;@green"
 
      # define FKEY settings to run macros
-     printf "fkey  5 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"runSQL.ksh"
-     printf "fkey  6 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"changeParams.ksh"
-     printf "fkey  9 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"fixedCol.ksh"
-     printf "fkey 10 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"setColours.ksh"
+     for( k=1;k<=12;k++ ){
+       if( fKeys[k] != "" ){
+         printf "fkey %d = \"merge \\\"|%s/%s\\\"\"\n",k,sc_macro_path,fKeys[k]
+       }
+     }
+     #printf "fkey  5 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"runSQL.ksh"
+     #printf "fkey  6 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"changeParams.ksh"
+     #printf "fkey  9 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"fixedCol.ksh"
+     #printf "fkey 10 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"setColours.ksh"
 
      if( oldRange != "" ){
        # if we are here, then there is a previously defined spreadsheet

@@ -6,6 +6,11 @@
 # optional settings
 #settings=/usr/local/bin/func.ksh
 
+# colour settings
 #fixedColours="@black;@yellow|@red;@yellow"
-fixedColours="@black;@white|@white;@blue"
-convopts="${convopts}:freezeColNum=2:maxlen=10000:fixedColours=${fixedColours}"
+#fixedColours="@black;@white|@white;@blue"
+
+# conversion script configuration
+#convopts="${convopts}:freezeColNum=2:maxlen=10000:fixedColours=${fixedColours}"
+# trace the conversion script
+#convopts="${convopts}:trc_level=1"

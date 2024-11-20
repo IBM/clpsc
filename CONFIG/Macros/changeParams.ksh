@@ -71,7 +71,8 @@ AssignOptValue ()
 (( _scmacro_loop = 0 ))
 while [[ _scmacro_loop -eq 0 ]]; do
   # query action to be performed
-  sendCmd "query \"Type command [dbname|schema|trace|show|done]: \""
+  #sendCmd "query \"Type command [dbname|schema|trace|show|done]: \""
+  sendCmd "query \"Type command [dbname|schema|trace|done]: \""
   _action="$(readResponse 300)"
 
   AssignOptValue "${_action}"

@@ -9,20 +9,43 @@ _configDir="${HOME}/.clpsc"
 _binDir="${HOME}/bin"
 _instDir="$(dirname $0)"
 
-which sc 1>/dev/null 2>&1
-if [[ $? -ne 0 ]]; then
-  print -- "Executable 'sc' not found. You need to install it first."
-  print -- "You can download 'sc' e.g. from https://github.com/n-t-roff/sc ."
-  print -- "Exit"
-  exit 1
+#_scPath="/usr/loca/bin/sc"
+_scPath=""
+
+print -- " "
+print -- "Installation procedure for 'clpsc' - a wrapper fo the Db2 CLP."
+print -- " "
+
+if [ -z ${_scPath} ]; then
+  print -- "No path to 'sc' provided."
+  print -- "This is OK - I will try to find 'sc' myself ..."
+  print -- " "
+  which sc 1>/dev/null 2>&1
+  if [[ $? -ne 0 ]]; then
+    print -- "Executable 'sc' not found. You need to install it first."
+    print -- "You can download 'sc' e.g. from https://github.com/n-t-roff/sc ."
+    print -- "Exit"
+    exit 1
+  else
+    _scPath="$(which sc)"
+  fi
 else
-  print -- "Found executable '$(which sc)' => OK"
+  print -- "Found path to 'sc' as '${_scPath}' ... testing ..."
+  print -- " "
+  if [ ! -e ${_scPath} ]; then
+    print -- "File '${_scPath}' is not executable."
+    print -- "Exit"
+    exit 1
+  fi
 fi
+print -- "Using executable '${_scPath}' ..."
 
 print -- " "
 print -- "Installation directory:     ${_instDir}"
 print -- "Configuration directory:    ${_configDir}"
 print -- "executable directory:       ${_binDir}"
+print -- " "
+print -- "Using 'sc' from:            ${_scPath}"
 print -- " "
 
 if [ ! -d "${_configDir}" ]; then

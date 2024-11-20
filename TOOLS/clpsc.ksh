@@ -144,8 +144,9 @@ AssignOptValue ()
                    print -- "[${_clpsc_prog}] Converter script:\n[${_clpsc_prog}]  " $(echo "dummy" | awk -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" showversion=1 -)
                    exit 0
                    ;;
-    track)         _clpsc_displayExe=less
+    trace)         _clpsc_displayExe=less
                    set -A _clpsc_displayExeA -- "-S"
+                   set -A _clpsc_convA -- "${_clpsc_convA[@]}" "trc_level=${_clpsc_trace}"
                    ;;
     *)             (( _clpsc_rc = 1 ))
                    ;;

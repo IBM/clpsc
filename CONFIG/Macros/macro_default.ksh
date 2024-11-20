@@ -74,6 +74,11 @@ sendMsg()
   traceMacro "Message:    '$@'"
 }
 
+errorMsg()
+{
+  sendMsg "[E] $@"
+}
+
 col2colno()
 {
   _colno=$(echo "$1" | awk 'BEGIN{for(i=0;i<256;i++){ ord[sprintf("%c",i)]=i }}{s=$1;for(i=1;i<=length(s);i++){n=(n*(26^(i-1)))+((ord[substr(s,i,1)]-64))}}END{printf "%d\n",n}' -)

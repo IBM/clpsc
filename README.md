@@ -38,7 +38,7 @@ As you can insert and delete columns and rows, the colouring scheme may get mixe
 
 # Configuration
 
-The default configuration directory of `clpsc.ksh` is `${HOME}/.clpsc`. You can change that using environment variable `CLPSCDIR`. I you would like to override the configuration in `clpscrc` located in the configuration directory, then do that in `clpscUser`. A template is part of the package.
+The default configuration directory of `clpsc.ksh` is `${HOME}/.clpsc`. You can change that using environment variable `CLPSCDIR`. If you would like to override the configuration in `clpscrc` located in the configuration directory, then do that in `clpscUser`. A template is part of the package.
 
 ## Configuration of the awk script
 
@@ -51,6 +51,7 @@ For the awk script use the following options:
     freezeColNum        number of frozen columns [0]
     fixedColours        colour settings for fixed columns [@black;@white|@black;@cyan]
     notFixedColours     colour settings for columns that are not fixed [@white;@black|@cyan;@black]
+    fkey<n>             bind a script located in the Macros sub-directory (without path) to an F key
 ```
 
 Displayed defaults are those of the awk script, not of `clpsc.ksh`.
@@ -61,7 +62,7 @@ To submit your setting to `clpsc.ksh`, specify them colon-separated using parame
 
 To make use of `clpsc.ksh`, you need to have installed [`sc`](https://github.com/n-t-roff/sc). `sc` has been created in the late 1970s and is a terminal-based, richly featured spreadsheet calculator. Apart from a very detailed manual page, there also is further information available in the WEB pages. You might refer e.g. to the relevant info in wikipedia.
 
-The SQL output, the fixed columns, and the columns that are not fixed are coloured so that these areas can be visually distinguished easily.
+The SQL output, the fixed columns, and the columns that are not fixed are coloured differently so that these areas can be visually distinguished easily.
 
 # Limitations
 
