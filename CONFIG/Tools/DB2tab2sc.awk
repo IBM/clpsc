@@ -30,10 +30,11 @@ function max(a,b)
 }
 function version(detailed)
 {
-  version_number="0.9.7"
+  version_number="0.9.7.001"
   if( detailed == -1 ){
     return ""
-  } else if( detailed == 0 ){
+  } else if( detailed == 0 || isarray(PROCINFO["argv"]) == 0 ){
+    # not detailed if cmdline args are not available
     return version_number
   }
   for( i in PROCINFO ){
@@ -53,18 +54,24 @@ function cmdline_vars(var_string)
 {
   return_string = ""
 
-  for( j in PROCINFO["argv"] ){
-    argv_string=PROCINFO["argv"][j]
-    k = split(argv_string,argv_a,/=/)
-	if( k == 2 ){
-      if( index(argv_a[1],var_string) == 1 || var_string == "" ){
-        if( length(return_string) == 0 ){
-          return_string = argv_string
-        } else {
-          return_string = sprintf("%s:%s",return_string,argv_string)
+  # can I retrieve cmdline args ?
+  if( isarray(PROCINFO["argv"]) == 1 ){
+    for( j in PROCINFO["argv"] ){
+      argv_string=PROCINFO["argv"][j]
+      k = split(argv_string,argv_a,/=/)
+  	if( k == 2 ){
+        if( index(argv_a[1],var_string) == 1 || var_string == "" ){
+          if( length(return_string) == 0 ){
+            return_string = argv_string
+          } else {
+            return_string = sprintf("%s:%s",return_string,argv_string)
+          }
         }
       }
     }
+  } else {
+    # cmdline args are not available
+    return_string = "__awk_argv_no_array__"
   }
 
   return return_string
@@ -119,6 +126,8 @@ BEGIN{
 	   notfixedColours="@white;@black|@cyan;@black"
        # version - showversion=-1,0,1 : show one of (no version+continue,short version+exit,long version+exit)
            showversion=-1
+       # default F Key settings
+           fKeysDefault="fkey11=runSQL.ksh:fkey12=changeParams.ksh:fkey9=fixedCol.ksh:fkey10=setColours.ksh"
 
        # array that allows conversion of char to ASCII value
        for(i=0;i<256;i++){ ord[sprintf("%c",i)]=i }
@@ -143,6 +152,11 @@ BEGIN{
     # get the FKey settings as fkeyX=..:fkeyY=...
     varName = "fkey"
     fKeyVarDefs = cmdline_vars(varName)
+    # check if F key settings can be defined via cmd line parameter
+    if( fKeyVarDefs == "__awk_argv_no_array__" ){
+      # F keys not configurable - use the default
+      fKeyVarDefs = fKeysDefault
+    }
     trace(1,sprintf("FKey Settings = \"%s\"\n",fKeyVarDefs))
     # split into a field with [fkeyX=...] [fkeyY=...] ...
     nVars = split( fKeyVarDefs,varSettings,/:/ )
