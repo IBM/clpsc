@@ -7,7 +7,7 @@
 
 #set -x
 _clpsc_prog="${0##*/}"             # name of the script
-_clpsc_version_number="0.9.7"
+_clpsc_version_number="0.9.8"
 # env var CLPSCDIR indicates an alternative config directory
 _clpsc_configdir="${CLPSCDIR-${HOME}/.clpsc}"
 export _clpsc_configdir
@@ -26,6 +26,12 @@ fi
 #if [[ -f ./.clpscrc ]]; then
 #  . ./.clpscrc
 #fi
+
+if [[ -n ${awkprog} ]]; then
+  _clpsc_awkprog="${awkprog}"
+  unset awkprog
+fi
+_clpsc_convTool="${_clpsc_awkprog-/usr/bin/awk}"
 
 # full path of sc executable
 if [[ -n ${scexecpath} ]]; then
@@ -70,7 +76,7 @@ _clpsc_displayExe="${_clpsc_scexecpath}"
 
 # prevent a setting of CLP option "-x" - this will not display headers so we can't process the output properly
 #set -A _clpsc_clpoptsA -- "${_clpsc_clpoptsA[@]}" "+x"
-set -A _clpsc_clpoptsA -- "${_clpsc_clpoptsA[@]}" `print -- "${_clpsc_clpopts}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -` "${_clpsc_clpoptsA[@]}"
+set -A _clpsc_clpoptsA -- "${_clpsc_clpoptsA[@]}" `print -- "${_clpsc_clpopts}" | "${_clpsc_convTool}" -F: '{for(i=1;i<=NF;i++) print $i}' -` "${_clpsc_clpoptsA[@]}"
 
 # usage
 usage ()
@@ -87,6 +93,7 @@ usage ()
   echo "    clpopts             options for Db2 CLP (separated by ':')"
   echo "    convopts            options for converter script (separated by ':')"
   echo "    scopts              options for sc (separated by ':')"
+  echo "    help                print help info and exit"
   echo "    version             print version info and exit"
 }
 
@@ -119,16 +126,16 @@ AssignOptValue ()
     schema)        ;;
     # Note that the CLP options coming from the comand line are being set before the preset options.
     # This is to prevent essential options to be overwritten.
-    clpopts)       set -A _clpsc_clpoptsA -- `print -- "${_clpsc_clpopts}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -` "${_clpsc_clpoptsA[@]}"
+    clpopts)       set -A _clpsc_clpoptsA -- `print -- "${_clpsc_clpopts}" | "${_clpsc_convTool}" -F: '{for(i=1;i<=NF;i++) print $i}' -` "${_clpsc_clpoptsA[@]}"
                    ;;
-    scopts)        set -A _clpsc_scoptsA -- "${_clpsc_scoptsA[@]}" `print -- "${_clpsc_scopts}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -`
+    scopts)        set -A _clpsc_scoptsA -- "${_clpsc_scoptsA[@]}" `print -- "${_clpsc_scopts}" | "${_clpsc_convTool}" -F: '{for(i=1;i<=NF;i++) print $i}' -`
                    set -A _clpsc_displayExeA -- "${_clpsc_scoptsA[@]}"
                    ;;
-    convopts)      set -A _clpsc_convA -- "${_clpsc_convA[@]}" `print -- "${_clpsc_convopts}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -`
+    convopts)      set -A _clpsc_convA -- "${_clpsc_convA[@]}" `print -- "${_clpsc_convopts}" | "${_clpsc_convTool}" -F: '{for(i=1;i<=NF;i++) print $i}' -`
                    ;;
     tab2sc)        ;;
     toolpath)      ;;
-    options)       set -A _clpsc_optionsA -- "${_clpsc_optionsA[@]}" `print -- "${_clpsc_options}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -`
+    options)       set -A _clpsc_optionsA -- "${_clpsc_optionsA[@]}" `print -- "${_clpsc_options}" | "${_clpsc_convTool}" -F: '{for(i=1;i<=NF;i++) print $i}' -`
                    ;;
     scexecpath)    _clpsc_displayExe="${_clpsc_scexecpath}"
                    ;;
@@ -141,7 +148,7 @@ AssignOptValue ()
                    fi
                    ;;
     version)       print -- "[${_clpsc_prog}] Version: ${_clpsc_version_number}"
-                   print -- "[${_clpsc_prog}] Converter script:\n[${_clpsc_prog}]  " $(echo "dummy" | awk -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" showversion=1 -)
+                   print -- "[${_clpsc_prog}] Converter script:\n[${_clpsc_prog}]  " $(echo "dummy" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" showversion=1 -)
                    exit 0
                    ;;
     trace)         _clpsc_displayExe=less
@@ -171,9 +178,9 @@ function db2clp
 }
 
 # set sc options as read in from profiles
-set -A _clpsc_scoptsA -- `print -- "${_clpsc_scopts}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -`
+set -A _clpsc_scoptsA -- `print -- "${_clpsc_scopts}" | "${_clpsc_convTool}" -F: '{for(i=1;i<=NF;i++) print $i}' -`
 # options for the converter (usually handed to the awk script)
-set -A _clpsc_convA -- `print -- "${_clpsc_convopts}" | awk -F: '{for(i=1;i<=NF;i++) print $i}' -`
+set -A _clpsc_convA -- `print -- "${_clpsc_convopts}" | "${_clpsc_convTool}" -F: '{for(i=1;i<=NF;i++) print $i}' -`
 (( _clpsc_grc = 0 ))
 
 # command line parameter processing
@@ -224,7 +231,7 @@ print -- "[${_clpsc_prog}]   SC exec path:\t\t${_clpsc_scexecpath}"
 print -- "[${_clpsc_prog}]   SC options:\t\t${_clpsc_scoptsA[@]}"
 print -- "[${_clpsc_prog}]   Tool / script path:\t${_clpsc_toolpath}"
 print -- "[${_clpsc_prog}]   Converter options:\t${_clpsc_convA[@]}"
-print -- "[${_clpsc_prog}]   tab2sc awk converter:\t${_clpsc_tab2sc}"
+print -- "[${_clpsc_prog}]   tab2sc converter:\t\t${_clpsc_tab2sc}"
 print --
 
 # export variables to be used by macros
@@ -243,11 +250,11 @@ if [[ "${_clpsc_if}" = "none" ]]; then
     print -- "[${_clpsc_prog}] "
   else
     # run Db2 CLP
-    db2 "${_clpsc_clpoptsA[@]}" "${@}" | awk -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
+    db2 "${_clpsc_clpoptsA[@]}" "${@}" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
   fi
 else
   # read in from an input file
-  awk -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" "${_clpsc_if}" | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
+  "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" "${_clpsc_if}" | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
 fi
 set +x
 set +o verbose

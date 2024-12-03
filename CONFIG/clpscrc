@@ -15,6 +15,9 @@
 # full path of sc
 scexecpath="$(which sc 2>/dev/null)"
 
+# awk being used - needs to be a GNU awk
+awkprog="/usr/bin/awk"
+
 # awk script to convert from Db2 CLP to sc
 tab2sc=DB2tab2sc.awk
 
