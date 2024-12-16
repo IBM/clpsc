@@ -12,6 +12,28 @@ _clpsc_version_number="0.9.8"
 _clpsc_configdir="${CLPSCDIR-${HOME}/.clpsc}"
 export _clpsc_configdir
 
+# if the config directory does not exist, check for a root installation
+# and copy / link data from there
+if [[ ! -d "${_clpsc_configdir}" ]]; then
+  _configDirRoot="/opt/CLPSC/CONFIG"
+  if [[ ! -d "${_configDirRoot}" ]]; then
+    print -- "[${_clpsc_prog}] ERROR: missing root installation !!"
+    exit -1
+  fi
+  mkdir -p "${_clpsc_configdir}"
+  if [[ $? -ne 0 ]]; then
+    print -- "[${_clpsc_prog}] ERROR: no configuration directory '${_clpsc_configdir}' !!"
+    exit -1
+  fi
+  ln -s "${_configDirRoot}"/clpscrc "${_clpsc_configdir}"
+  ln -s "${_configDirRoot}"/Macros "${_clpsc_configdir}"
+  ln -s "${_configDirRoot}"/Tools "${_clpsc_configdir}"
+  cp "${_configDirRoot}"/clpscUser.template "${_clpsc_configdir}"
+  mkdir "${_clpsc_configdir}"/Logs
+  mkdir "${_clpsc_configdir}"/tmp
+fi
+
+# default sc path - may be overwritten by the config
 _clpsc_scexecpath="$(which sc 2>/dev/null)"
 
 _clpsc_convopts=""

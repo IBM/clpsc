@@ -9,7 +9,10 @@ _configDir="${HOME}/.clpsc"
 _binDir="${HOME}/bin"
 _instDir="$(dirname $0)"
 
-#_scPath="/usr/loca/bin/sc"
+_configDirRoot="/opt/CLPSC/CONFIG"
+_binDirRoot="/usr/local/bin"
+
+#_scPath="/usr/local/bin/sc"
 _scPath=""
 
 print -- " "
@@ -40,6 +43,12 @@ else
 fi
 print -- "Using executable '${_scPath}' ..."
 
+if [[ $(id -u) -eq 0 ]]; then
+  print -- "\nInstallation as 'root' ... \n"
+  _configDir="${_configDirRoot}"
+  _binDir="${_binDirRoot}"
+fi
+
 print -- " "
 print -- "Installation directory:     ${_instDir}"
 print -- "Configuration directory:    ${_configDir}"
@@ -49,11 +58,11 @@ print -- "Using 'sc' from:            ${_scPath}"
 print -- " "
 
 if [ ! -d "${_configDir}" ]; then
-  mkdir "${_configDir}"
+  mkdir -p "${_configDir}"
 fi
 
 if [ ! -d "${_binDir}" ]; then
-  mkdir "${_binDir}"
+  mkdir -p "${_binDir}"
 fi
 
 print -- "Copy configuration ..."
