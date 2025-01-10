@@ -80,3 +80,6 @@ To move and work in the spreadsheet displaying the result set of a SQL query use
   - Use Ctrl-L to refresh the screen.
   - Use g to go to some cell - e.g. "g ae5". You also can use the sc command g to search for a string, if you enclose the search string into double quotes (").
 
+# Adding your own macros
+
+In `sc` you can define macros to handle certain tasks. `clpsc.ksh` comes with a set of macros which are stored in the configuration directory under subdirectory `Macros`. If you intend to create your own macros, please them in subdirectory `LocalMacros` which is created at installation time.

@@ -29,6 +29,7 @@ if [[ ! -d "${_clpsc_configdir}" ]]; then
   ln -s "${_configDirRoot}"/Macros "${_clpsc_configdir}"
   ln -s "${_configDirRoot}"/Tools "${_clpsc_configdir}"
   cp "${_configDirRoot}"/clpscUser.template "${_clpsc_configdir}"
+  mkdir "${_clpsc_configdir}"/LocalMacros
   mkdir "${_clpsc_configdir}"/Logs
   mkdir "${_clpsc_configdir}"/tmp
 fi
@@ -78,9 +79,11 @@ if [[ -n ${scopts} ]]; then
   unset scopts
 fi
 if [[ -n ${settings} ]]; then
-  _clpsc_settings="${settings}"
+  if [[ -f ${settings} ]]; then
+    _clpsc_settings="${settings}"
+    . "${_clpsc_settings}"
+  fi
   unset settings
-  . "${_clpsc_settings}"
 fi
 
 #_clpsc_toolpath="/home/mschuene/ArchiveSupport/LOCAL/Tools/SupportScripts"

@@ -4,7 +4,9 @@
 #
 
 # optional settings
-#settings=/usr/local/bin/func.ksh
+#   Specify a script you would like to be run for setting up stuff
+#   you think is suitable for you.
+#settings=
 
 # colour settings
 #fixedColours="@black;@yellow|@red;@yellow"
