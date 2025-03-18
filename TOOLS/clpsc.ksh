@@ -7,31 +7,33 @@
 
 #set -x
 _clpsc_prog="${0##*/}"             # name of the script
-_clpsc_version_number="0.9.8"
+_clpsc_version_number="0.9.8.2"
 # env var CLPSCDIR indicates an alternative config directory
 _clpsc_configdir="${CLPSCDIR-${HOME}/.clpsc}"
 export _clpsc_configdir
+_configDirRoot="/opt/CLPSC/CONFIG"
 
-# if the config directory does not exist, check for a root installation
-# and copy / link data from there
-if [[ ! -d "${_clpsc_configdir}" ]]; then
-  _configDirRoot="/opt/CLPSC/CONFIG"
-  if [[ ! -d "${_configDirRoot}" ]]; then
-    print -- "[${_clpsc_prog}] ERROR: missing root installation !!"
-    exit -1
+# if the user config directory is older than the global config directory,
+# copy / link data from there
+if [[ -d "${_configDirRoot}" ]]; then
+  if [[ "${_clpsc_configdir}" -ot "${_configDirRoot}" ]]; then
+    if [[ ! -d "${_clpsc_configdir}" ]]; then
+      mkdir -p "${_clpsc_configdir}"
+      if [[ $? -ne 0 ]]; then
+        print -- "[${_clpsc_prog}] ERROR: no configuration directory '${_clpsc_configdir}' !!"
+        exit -1
+      fi
+    fi
+    [[ ! -f  "${_clpsc_configdir}"/clpscrc ]] && ln -s "${_configDirRoot}"/clpscrc "${_clpsc_configdir}"
+    [[ ! -d  "${_clpsc_configdir}"/Macros ]] && ln -s "${_configDirRoot}"/Macros "${_clpsc_configdir}"
+    [[ ! -d  "${_clpsc_configdir}"/Tools ]] && ln -s "${_configDirRoot}"/Tools "${_clpsc_configdir}"
+    for _i in clpscUser.template genDiffData.config; do
+      cp -p "${_configDirRoot}/${_i}" "${_clpsc_configdir}"
+    done
+    [[ ! -d  "${_clpsc_configdir}"/LocalMacros ]] && mkdir "${_clpsc_configdir}"/LocalMacros
+    [[ ! -d  "${_clpsc_configdir}"/Logs ]] && mkdir "${_clpsc_configdir}"/Logs
+    [[ ! -d  "${_clpsc_configdir}"/tmp ]] && mkdir "${_clpsc_configdir}"/tmp
   fi
-  mkdir -p "${_clpsc_configdir}"
-  if [[ $? -ne 0 ]]; then
-    print -- "[${_clpsc_prog}] ERROR: no configuration directory '${_clpsc_configdir}' !!"
-    exit -1
-  fi
-  ln -s "${_configDirRoot}"/clpscrc "${_clpsc_configdir}"
-  ln -s "${_configDirRoot}"/Macros "${_clpsc_configdir}"
-  ln -s "${_configDirRoot}"/Tools "${_clpsc_configdir}"
-  cp "${_configDirRoot}"/clpscUser.template "${_clpsc_configdir}"
-  mkdir "${_clpsc_configdir}"/LocalMacros
-  mkdir "${_clpsc_configdir}"/Logs
-  mkdir "${_clpsc_configdir}"/tmp
 fi
 
 # default sc path - may be overwritten by the config
@@ -64,6 +66,10 @@ fi
 # evaluate config file
 if [[ -n ${tab2sc} ]]; then
   _clpsc_tab2sc="${tab2sc}"
+  unset tab2sc
+fi
+if [[ -n ${toolpath} ]]; then
+  _clpsc_toolpath="${toolpath}"
   unset tab2sc
 fi
 if [[ -n ${convopts} ]]; then

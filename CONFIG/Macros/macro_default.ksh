@@ -13,7 +13,7 @@ _scmacro_name_base="$(basename ${_scmacro_name_base} .bash)"
 _scmacro_name_base="$(basename ${_scmacro_name_base} .sh)"
 
 # default timeout (e.g. for reading from sc)
-_scmacro_timeout=${_scmacro_timeout-3}
+_scmacro_timeout=${_scmacro_timeout-1}
 (( _scmacro_timeout = ${_scmacro_timeout} ))
 
 # default trace level/dir/path
@@ -27,8 +27,21 @@ _scmacro_trc_path="${_scmacro_trc_dir}/${_scmacro_name_base}.trc"
 
 traceMacro()
 {
+  typeset _scmacro_trcChk
+  typeset _scmacro_trcMsg
+
   if [[ _scmacro_trc -gt 0 ]]; then
-    echo -e "[${_scmacro_name}][$(date +%Y%m%d%H%M%S)] $@" >> "${_scmacro_trc_path}"
+    #(( _scmacro_trcChk = $(echo $1 | awk '{if(length($0) > 1){print "0";next}match($1,/[[:digit:]]/);print RSTART}' -) ))
+    (( _scmacro_trcChk = ${#1} ))
+    if [[ _scmacro_trcChk -eq 1 ]]; then
+      (( _scmacro_trcMsg = $1 ))
+      shift
+    else
+      (( _scmacro_trcMsg = 0 ))
+    fi
+    if [[ _scmacro_trc -ge _scmacro_trcMsg ]]; then
+      echo -e "[${_scmacro_name}][$(date +%Y%m%d%H%M%S.%N)] $@" >> "${_scmacro_trc_path}"
+    fi
   fi
 }
 
@@ -50,7 +63,7 @@ function sepRow
 sendCmd()
 {
   echo "$@"
-  traceMacro "Sending:    '$@'"
+  traceMacro 2 "Sending:    '$@'"
 }
 
 readResponse()
@@ -64,7 +77,7 @@ readResponse()
   if [[ -n _scmacro_timeout_tmp ]]; then
     (( _scmacro_timeout = _scmacro_timeout_tmp ))
   fi
-  traceMacro "Response:   '${_response}'"
+  traceMacro 2 "Response:   '${_response}'"
   echo "${_response}"
 }
 
@@ -111,10 +124,10 @@ setAllColours()
     fi
   done
 
-  _addrOBeg=$(echo ${_rangeAddr[0]} | cut -d: -f1)
-  _addrOEnd=$(echo ${_rangeAddr[0]} | cut -d: -f2)
-  _addrIBeg=$(echo ${_rangeAddr[1]} | cut -d: -f1)
-  _addrIEnd=$(echo ${_rangeAddr[1]} | cut -d: -f2)
+  typeset _addrOBeg=$(echo ${_rangeAddr[0]} | cut -d: -f1)
+  typeset _addrOEnd=$(echo ${_rangeAddr[0]} | cut -d: -f2)
+  typeset _addrIBeg=$(echo ${_rangeAddr[1]} | cut -d: -f1)
+  typeset _addrIEnd=$(echo ${_rangeAddr[1]} | cut -d: -f2)
   traceMacro "_addrOBeg: ${_addrOBeg}"
   traceMacro "_addrOEnd: ${_addrOEnd}"
   traceMacro "_addrIBeg: ${_addrIBeg}"
@@ -187,7 +200,7 @@ function findPPID
 {
   _pid=$$
   traceMacro "pid = ${_pid}"
-  _psOut0="$(ps -ef | awk '{if($3 == pid){print $0}}' pid=${_pid} | grep -vE 'grep|ps -ef')"
+  _psOut0="$(ps -ef | awk '{if($2 == pid){print $0}}' pid=${_pid} | grep -vE 'grep|ps -ef')"
   traceMacro "ps -ef : \n\"${_psOut0}\""
   _ppid="$(echo "${_psOut0}" | awk '{print $3}' -)"
   traceMacro "ppid = ${_ppid}"

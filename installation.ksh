@@ -65,18 +65,18 @@ if [ ! -d "${_binDir}" ]; then
   mkdir -p "${_binDir}"
 fi
 
-print -- "Copy configuration ..."
-( cd "${_instDir}" && cp -r CONFIG/* "${_configDir}" )
-print -- "... done"
-print -- "Copy script ..."
-( cd "${_instDir}" && cp -r TOOLS/clpsc.ksh "${_binDir}" )
-print -- "... done"
+print -- "Copy configuration ... \c"
+( cd "${_instDir}" && cp -rp CONFIG/* "${_configDir}" )
+print -- "done"
+print -- "Copy script ... \c"
+( cd "${_instDir}" && cp -p TOOLS/clpsc.ksh "${_binDir}" )
+print -- "done"
 
 print -- " "
-print -- "Set permissions ..."
+print -- "Set permissions ... \c"
 chmod 755 "${_configDir}/Macros/"*
 chmod 755 "${_binDir}/clpsc.ksh"
-print -- "... done"
+print -- "done"
 print -- " "
 
 print -- "Finished successfully."
