@@ -78,12 +78,28 @@ function cmdline_vars(var_string)
 }
 function filter_value(value,filter_conditions)
 {
+  rc=0
+
+  trace(2,sprintf("[filter_value] value=%s, # of conditions = %d\n",value,length(filter_conditions)))
   for( cond in filter_conditions ){
-    if( value ~ substr(filter_conditions[cond],2,length(filter_conditions[cond])-1) ){
-      return sprintf("%c1",substr(filter_conditions[cond],1,1))
+    trace(2,sprintf("[filter_value] cond=%s, conditions = %s\n",cond,filter_conditions[cond]))
+    #if( substr(filter_conditions[cond],1,1) ~ "[+-]" && cond != "pm" ){
+    if( cond ~ "^[[:digit:]]+$" && substr(filter_conditions[cond],1,1) ~ "[+-]" ){
+      if( value ~ substr(filter_conditions[cond],2,length(filter_conditions[cond])-1) ){
+        trace(2,sprintf("[filter_value] cond=%s, conditions = %s => matched\n",cond,filter_conditions[cond]))
+        if( substr(filter_conditions[cond],1,1) == "-" ){
+          return -1
+        } else {
+          rc=1
+        }
+      } else {
+        if( substr(filter_conditions[cond],1,1) == "+" ){
+          return 0
+        }
+      }
     }
   }
-  return 0
+  return rc
 }
 function trace(level,info)
 {
@@ -141,7 +157,7 @@ BEGIN{
            # In the 2nd case, we can better evaluate the data type for each column - as the data type
            # is the same for all entries of a column.
            # Values:
-           #   byValue
+           #   byValue (deprecated)
            #   bulk
            outMode="bulk"
        # filter the data
@@ -218,51 +234,56 @@ BEGIN{
             fKeys[j] = ""
           }
         }
-	# save the new fkey setting in the fKeys[] array
-	# extract the number form the variable name fkey...
+        # save the new fkey setting in the fKeys[] array
+        # extract the number form the variable name fkey...
         fKeys[substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName))] = varDef[2]
-	trace(1,sprintf("FKey #%d (%s): %s\n",substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName)),substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName)),varDef[2]))
+        trace(1,sprintf("FKey #%d (%s): %s\n",substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName)),substr(varDef[1],length(varName)+1,length(varDef[1])-length(varName)),varDef[2]))
       }
     }
     j = 0
     # if filtering is defined, fill the filter structures
     if( filter != "" ){
-      trace(2,sprintf("# filter definition = \"%s\"\n",filter))
-      fn=split(filter,filterParms,/\|/)
+      trace(2,sprintf("filter definition = \"%s\"\n",filter))
+      fn=split(filter,filterParms,/[;:]/)
       filterColName=filterParms[1]
-      delete filterParms[1]
       if( fn > 1 ){
-        trace(2,sprintf("# filter column = \"%s\"\n",filterParms[1]))
-        for( i=fn;i>1;i-- ){
+        trace(2,sprintf("filter column = \"%s\"\n",filterParms[1]))
+        filterDefined=1
+        for( i=1;i<=fn;i++ ){
           if( match(substr(filterParms[i],1,1),/[+-]/) != 1 ){
-            delete filterParms[i]
-          }
-          trace(2,sprintf("# filter condition = \"%s\"\n",filterParms[i]))
-        }
-      }
-      fNum=0
-      for( i=1;i<=fn;i++ ){
-        if( length(filterParms[i]) > 0 ){
-          fNum++
-          filterItems[fNum] = filterParms[i]
-          # filterDefined = 1 indicates that we only retain rows that match a certain filter condition.
-          # filterDefined = -1 indicates that we filter out rows that match a certain filter condition.
-	  if( substr(filterItems[fNum],1,1) == "+" ){
-            filterDefined=1
+            filterColName=filterParms[i]
+            j=1
           } else {
-            if( filterDefined != 1 ){
-              if( substr(filterItems[fNum],1,1) == "-" ){
-                filterDefined=-1
+            filterItems[filterColName][j]=filterParms[i]
+            if( substr(filterItems[filterColName][j],1,1) == "+" ){
+              filterItems[filterColName]["pm"]=1
+            } else {
+              if( filterItems[filterColName]["pm"] != 1 ){
+                if( substr(filterItems[filterColName][j],1,1) == "-" ){
+                  filterItems[filterColName]["pm"]=-1
+                }
               }
             }
+            j0=j
+            j++
+          }
+          #trace(2,sprintf("filter condition = \"%s\"\n",filterParms[i]))
+          #if( j0 > 0 ){
+          #  trace(2,sprintf("filterItems[%s][%d] = \"%s\"\n",filterColName,j0,filterItems[filterColName][j0]))
+          #}
+        }
+	for( fItem in filterItems ){
+          trace(2,sprintf("filter field = \"%s\"\n",fItem))
+	  for( fItemValue in filterItems[fItem] ){
+            trace(2,sprintf("filter field cond = \"%s\", value = \"%s\"\n",fItemValue,filterItems[fItem][fItemValue]))
           }
         }
       }
-      delete filterParms
+      j=0
     } # end filtering
   } # one-time settings
   trace(1,sprintf("# linetype = \"%s\"\n",linetype))
-  trace(1,sprintf("# line = \"%s\"\n",$0))
+  trace(2,sprintf("# line = \"%s\"\n",$0))
 
   # diagnostics
   if( tolower(diagCol) == "y")       { diagCol=1 }
@@ -344,9 +365,15 @@ BEGIN{
         sub(/^ */,"",a[i])  # truncate leading blanks
         sub(/ *$/,"",a[i])  # truncate trailing blanks
         l[i] = length(a[i]) + colGap
-        if( filterDefined != 0 ){
-          if( filterColName == a[i] ){
-            filterColNum=i
+        if( isarray(filterItems) && length(filterItems) > 0 ){
+          for( fCol in filterItems ){
+            if( fCol == a[i] ){
+              filterItems[fCol]["fColNum"]=i
+              trace(2,sprintf("filterItems[%s] (num=%d) with %d filter entries\n",fCol,i,length(filterItems[fCol])-2))
+              for( i0 in filterItems[fCol] ){
+                trace(2,sprintf("filterItems[%s][%s]=%s\n",fCol,i0,filterItems[fCol][i0]))
+              }
+            }
           }
         }
       }
@@ -453,15 +480,17 @@ BEGIN{
       for(i=1;i<=nCols+2;i++){
         # get a single value
         fld=substr(record,s[i],e[i])
-        if( match(fld,/^- *$/) ){
+        # left justified "-", or integer / decimal is considered as string
+        if( match(fld,/^- *$/) || match(fld,/^[[:digit:]]{1,}[.]?[[:digit:]]{0,} +$/) ){
           t[i] = "s"                      # string NULL value
         } else if( match(fld,/^ *-$/) ){
           t[i] = "i"                      # integer NULL value
         }
-	trace(2,sprintf("tracepoint 1: fld = >%s<, t[%d] = %s\n",fld,i,t[i]))
+        trace(3,sprintf("field data (not stripped): fld = >%s<, t[%d] = %s\n",fld,i,t[i]))
         sub(/^ */,"",fld)      # truncate leading blanks
         sub(/ *$/,"",fld)      # truncate trailing blanks
         gsub(/\n/,CRchar,fld)  # replace CR by "\n" (or what CRchar is set to)
+        trace(1,sprintf("field data (stripped): fld = >%s<, t[%d] = %s\n",fld,i,t[i]))
 
         # determine the data type of cell content ; distinguish between numbers and strings ...
         if( match(fld,/^[-+]?[[:digit:]]{1,}$/) == 1 ){
@@ -475,11 +504,11 @@ BEGIN{
           curFmt = sprintf( "f%2.2d",length(substr(fld,index(fld,"E")+2,length(fld))) )
           if( curFmt > t[i] ) t[i] = curFmt       # floating point
         } else {
-	  if( fld == "-" ) {
+          if( fld == "-" ) {
             # a simple "-" is not necessarily an indication of a string, but maybe a NULL value
             # therefore, the "-" should not cause a decision for a data type
           }
-	  else if( "s" >= t[i] ) {
+          else if( "s" >= t[i] ) {
             t[i] = "s"             # string
             gsub(/"/,"\\\"",fld)
           }
@@ -490,7 +519,7 @@ BEGIN{
         l[i] = max(l[i],length(fld)+colGap)
 
         # output now, or later ?
-	# bulk output is the default, and is (better) tested
+        # bulk output is the default, and is (better) tested
         if( outMode == "byValue" ){
           # print the field now
           switch(t[i]){
@@ -506,21 +535,29 @@ BEGIN{
       } # for ... loop ended for the row (all cols processed)
 
       # filtering
-      if( filterDefined != 0 ){
+      if( isarray(filterItems) == 1 && length(filterItems) > 0 ){
         # we reach this point only if filtering is defined
         # if filter_value() returns -1, then the line just processed is to be discarded
         # if filter_value() returns 1, then the line just processed is to be retained (i.e. do nothing)
-        # if filter_value() returns 0, then the behaviour depends on the value of filterDefined
-	trace(1,sprintf("filtering: %d\n",filterDefined))
-        switch( filter_value(c[j][filterColNum],filterItems) ){
-          case -1:    trace(2,sprintf("filter result -1 - discard \"%s\"\n",c[j][filterColNum]))
-                      delete c[j]; j--; nRows--
-                      break
-          case  0:    if( filterDefined == 1 ){
-                        trace(2,sprintf("filter result 0 - discard \"%s\"\n",c[j][filterColNum]))
-                        delete c[j]; j--; nRows--
-                      }
-                      break
+        # if filter_value() returns 0, then the behaviour depends on the "pm" value
+        trace(1,sprintf("Number of filterItems: %d\n",length(filterItems)))
+        for( fCol in filterItems ){
+          fVal = filter_value(c[j][filterItems[fCol]["fColNum"]],filterItems[fCol])
+          trace(2,sprintf("filter_value(c[%d][filterItems[%s][fColNum]],filterItems[%s]) = %d\n",j,fCol,fCol,fVal) )
+          delRow=0
+          switch( fVal ){
+            case -1:    delRow=1; break
+            case  0:    if( filterItems[fCol]["pm"] == 1 ){ delRow=1 }
+                        break
+            case 1:     break
+          }
+          if( delRow == 1 ){
+            trace(1,sprintf("filter result %d - pm value = %d - discard \"%s\"\n",fVal,filterItems[fCol]["pm"],c[j][filterItems[fCol]["fColNum"]]) )
+            delete c[j]; j--; nRows--
+            break
+          } else {
+            trace(2,sprintf("filter result %d - pm value = %d - retain \"%s\"\n",fVal,filterItems[fCol]["pm"],c[j][filterItems[fCol]["fColNum"]]) )
+          }
         }
       }
     } # end of if branch on linetypes
@@ -567,10 +604,6 @@ END{
          printf "fkey %d = \"merge \\\"|%s/%s\\\"\"\n",k,sc_macro_path,fKeys[k]
        }
      }
-     #printf "fkey  5 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"runSQL.ksh"
-     #printf "fkey  6 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"changeParams.ksh"
-     #printf "fkey  9 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"fixedCol.ksh"
-     #printf "fkey 10 = \"merge \\\"|%s/%s\\\"\"\n",sc_macro_path,"setColours.ksh"
 
      if( oldRange != "" ){
        # if we are here, then there is a previously defined spreadsheet
@@ -672,7 +705,7 @@ END{
        if( nRows > 0 ){
          # set the format for each column
          for(i=1;i<=nCols;i++){
-	   trace(1,sprintf("tracepoint 2: t[%d] = %s\n",i,t[i]))
+         trace(1,sprintf("tracepoint 2: t[%d] = %s\n",i,t[i]))
            switch(t[i]){
              case "i":
              case "s":             printf "format %s %d 0 0\n",num2char(i),min(min(e[i],w[2])+colGap,l[i]); break

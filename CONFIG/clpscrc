@@ -20,10 +20,13 @@ awkprog="/usr/bin/gawk"
 
 # awk script to convert from Db2 CLP to sc
 #tab2sc=DB2tab2sc.awk
-tab2sc=DB2tab2sc_v0.9.7.001.awk
+tab2sc=DB2tab2sc_v0.9.8.002.awk
+
+# default trace directory
+trc_path="${_clpsc_configdir}/Logs"
 
 # options for the awk script
-convopts="maxlen=1000:headerGap=1:colGap=1:freezeColNum=1:sc_macro_path=${_clpsc_configdir}/Macros"
+convopts="maxlen=1000:headerGap=1:colGap=1:freezeColNum=1:sc_macro_path=${_clpsc_configdir}/Macros:trc_path=${trc_path}"
 # options for Db2 CLP
 clpopts="-v"
 # options for sc
@@ -33,7 +36,7 @@ clpopts="-v"
 #
 # tracing
 _scmacro_trc=0                                  # macro trace (0=off, 1=on)
-_scmacro_trc_dir="${_clpsc_configdir}/Logs"     # macro trace directory
+_scmacro_trc_dir="${trc_path}"                  # macro trace directory
 
 # SQL history
 _scmacro_histfile="${_clpsc_configdir}/SQLhistory"

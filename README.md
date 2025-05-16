@@ -15,6 +15,8 @@ Command line options of `clpsc.ksh` are specified using option=value. Valid opti
     clpopts             options for Db2 CLP (separated by ':')
     convopts            options for converter script (separated by ':')
     scopts              options for sc (separated by ':')
+    filter              option to filter the output
+    help                print help info and exit
     version             print version info and exit
 ```
 
@@ -24,7 +26,7 @@ Run `clpsc.ksh` using a syntax following one of the examples below:
   - `clpsc.ksh option=value [...] <CLP options> -f <SQL file>`
   - `clpsc.ksh option=value [...] if=<input file>`
 
-Here, the `<SQL file>` is a file containing an SQL command. Depending on how the SQL command is terminated, you need to use CLP options `-t`, or `-td<terminator>`. `<input file>` is a file containing CLP output. If no input file is used, then the Db2 instance, and the database name need to be specified, either via environment, or via command line.
+Here, the `<SQL file>` is a file containing an SQL command. Depending on how the SQL command is terminated, you need to use CLP options `-t`, or `-td<terminator>`. `<input file>` is a file containing CLP output. If no input file is used, then the Db2 instance, and the database name need to be specified, either via environment, or via command line. Option `filter` allows to filter the content of a file that is read in with option `if`. The syntax of this option is `filter=<field name>:{+-}<regular expression>[:{+-}<regular expression>...][:<field name>:{+-}<regular expression>[...]]`. `+` and `-` decide whether the result of the subsequent regular expression should be displayed (`+`), or discarded (`-`, a NOT expression).
 
 You can use `clpsc.ksh` to display SQL output in a very convenient form. The header of the output containing the columns names is fixed, i.e. is not scrolled with the data. Similarly, by default the first column is fixed as well. The data is displayed in alternating foreground/background colours.
 

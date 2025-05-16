@@ -124,6 +124,7 @@ usage ()
   echo "    clpopts             options for Db2 CLP (separated by ':')"
   echo "    convopts            options for converter script (separated by ':')"
   echo "    scopts              options for sc (separated by ':')"
+  echo "    filter              option to filter the output"
   echo "    help                print help info and exit"
   echo "    version             print version info and exit"
 }
@@ -154,6 +155,8 @@ AssignOptValue ()
                    ;;
     fcn)           set -A _clpsc_convA -- "${_clpsc_convA[@]}" "freezeColNum=${_clpsc_fcn}"
                    ;;
+    filter)        set -A _clpsc_convA -- "${_clpsc_convA[@]}" "filter=${_clpsc_filter}"
+                   ;;
     schema)        ;;
     # Note that the CLP options coming from the comand line are being set before the preset options.
     # This is to prevent essential options to be overwritten.
@@ -182,8 +185,8 @@ AssignOptValue ()
                    print -- "[${_clpsc_prog}] Converter script:\n[${_clpsc_prog}]  " $(echo "dummy" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" showversion=1 -)
                    exit 0
                    ;;
-    trace)         _clpsc_displayExe=less
-                   set -A _clpsc_displayExeA -- "-S"
+    trace)         #_clpsc_displayExe=less
+                   #set -A _clpsc_displayExeA -- "-S"
                    set -A _clpsc_convA -- "${_clpsc_convA[@]}" "trc_level=${_clpsc_trace}"
                    ;;
     *)             (( _clpsc_rc = 1 ))
@@ -263,6 +266,7 @@ print -- "[${_clpsc_prog}]   SC options:\t\t${_clpsc_scoptsA[@]}"
 print -- "[${_clpsc_prog}]   Tool / script path:\t${_clpsc_toolpath}"
 print -- "[${_clpsc_prog}]   Converter options:\t${_clpsc_convA[@]}"
 print -- "[${_clpsc_prog}]   tab2sc converter:\t\t${_clpsc_tab2sc}"
+print -- "[${_clpsc_prog}]   Filter the output:\t${_clpsc_filter}"
 print --
 
 # export variables to be used by macros
