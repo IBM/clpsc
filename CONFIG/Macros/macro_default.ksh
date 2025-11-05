@@ -63,7 +63,7 @@ function sepRow
 sendCmd()
 {
   echo "$@"
-  traceMacro 2 "Sending:    '$@'"
+  traceMacro 3 "Sending:    '$@'"
 }
 
 readResponse()
@@ -77,7 +77,7 @@ readResponse()
   if [[ -n _scmacro_timeout_tmp ]]; then
     (( _scmacro_timeout = _scmacro_timeout_tmp ))
   fi
-  traceMacro 2 "Response:   '${_response}'"
+  traceMacro 3 "Response:   '${_response}'"
   echo "${_response}"
 }
 
@@ -210,6 +210,23 @@ function findPPID
   echo "${_ppid}"
 
   return 0
+}
+
+function setDb2InstEnv
+{
+  (( _rc = 0 ))
+
+  if [[ -n "${_clpsc_dbinstance}" ]]; then
+    _dbuser_home=$(getent passwd | grep "${_clpsc_dbinstance}" | cut -d: -f6)
+    if [[ -f "${_dbuser_home}"/sqllib/db2profile ]]; then
+      . "${_dbuser_home}"/sqllib/db2profile
+    else
+      errorMsg "'${_clpsc_dbinstance}' is not a valid Db2 instance"
+      (( _rc = 1 ))
+    fi
+  fi
+
+  return ${_rc}
 }
 
 function db2Connect

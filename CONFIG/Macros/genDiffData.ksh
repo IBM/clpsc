@@ -232,13 +232,23 @@ _rangeAddr[1]=${_addrIBeg}:${_addrOEnd}
 (( _i = _addrIBegRow ))
 (( _col = $(atocol ${_addrOBegCol}) ))
 (( _col = _col + 1 ))
+# get timestamps from the 1st filled column of this data range
 sendCmd "seval @coltoa(${_col})"
 _colTimeISO=$(readResponse)
 #_colTimeISO=$(nextCol ${_addrOBegCol})
 while [[ _i -le _addrOEndRow ]]; do
   sendCmd "getstring ${_colTimeISO}${_i}"
   _timeISO="$(readResponse)"
-  sendCmd "let ${_addrOBegCol}${_i} = @dts(@ston(@substr(B${_i},1,4)),@ston(@substr(B${_i},6,7)),@ston(@substr(B${_i},9,10)))+@tts(@ston(@substr(B${_i},12,13)),@ston(@substr(B${_i},15,16)),@ston(@substr(B${_i},18,19)))+(@ston(@substr(B${_i},21,26))/1000000)"
+  _dateSecsCalc="@ston(@substr(${_colTimeISO}${_i},1,4)),@ston(@substr(${_colTimeISO}${_i},6,7)),@ston(@substr(${_colTimeISO}${_i},9,10))"
+  _timeSecsCalc="@ston(@substr(${_colTimeISO}${_i},12,13)),@ston(@substr(${_colTimeISO}${_i},15,16)),@ston(@substr(${_colTimeISO}${_i},18,19))"
+  traceMacro 2 "_dateSecsCalc = '${_dateSecsCalc}'"
+  traceMacro 2 "_timeSecsCalc = '${_timeSecsCalc}'"
+  _secsCalc="@dts(${_dateSecsCalc})+@tts(${_timeSecsCalc})+(@ston(@substr(${_colTimeISO}${_i},21,26))/1000000)"
+  sendCmd "eval ${_secsCalc}"
+  _secsResult=$(readResponse)
+  traceMacro 2 "_secsResult = '${_secsResult}'"
+  _secsCalc="@dts(${_dateSecsCalc})+@tts(${_timeSecsCalc})+(@ston(@substr(${_colTimeISO}${_i},21,26))/1000000)"
+  sendCmd "let ${_addrOBegCol}${_i} = @dts(${_dateSecsCalc})+@tts(${_timeSecsCalc})+(@ston(@substr(${_colTimeISO}${_i},21,26))/1000000)"
   (( _i = _i + 1 ))
 done
 

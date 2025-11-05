@@ -49,6 +49,7 @@ else
 fi
 
 sendMsg "Connecting to the DB ${_clpsc_dbname}"
+setDb2InstEnv
 _db2Msg="$(db2Connect)"
 traceMacro "${_db2Msg}"
 

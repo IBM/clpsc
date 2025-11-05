@@ -32,33 +32,39 @@ AssignOptValue ()
   eval _qA_${_option_}=$_option_value 2>/dev/null
 
   case "${_option_}" in
-    dbname)   if [[ "${_clpsc_dbname}" != "${_qA_dbname}" ]]; then
-                _clpsc_dbname=$(echo ${_qA_dbname} | tr 'a-z' 'A-Z')
-                (( _qA_changed = 1 ))
-              fi
-              ;;
-    schema)   if [[ "${_clpsc_schema}" != "${_qA_schema}" ]]; then
-	        _clpsc_schema=$(echo ${_qA_schema} | tr 'a-z' 'A-Z')
-                (( _qA_changed = 1 ))
-              fi
-              ;;
-    trace)    if [[ _scmacro_trc -ne ${_qA_trace} ]]; then
-                (( _scmacro_trc = ${_qA_trace} ))
-                (( _qA_changed = 1 ))
-              fi
-              #echo "export _scmacro_trc=${_scmacro_trc}" >> "${_clpsc_configdir}/tmp/${_scmacro_name_base}.tmp"
-              ;;
-    show)     showParams
-              #(( _scmacro_loop = 1 ))
-              ;;
-    done)     (( _scmacro_loop = 1 ))
-              ;;
-    *)        (( _qA_rc = 1 )) ;;
+    dbinstance) if [[ "${_clpsc_dbinstance}" != "${_qA_dbinstance}" ]]; then
+                  _clpsc_dbinstance=$(echo ${_qA_dbinstance} | tr 'A-Z' 'a-z')
+                  (( _qA_changed = 1 ))
+                fi
+                ;;
+    dbname)     if [[ "${_clpsc_dbname}" != "${_qA_dbname}" ]]; then
+                  _clpsc_dbname=$(echo ${_qA_dbname} | tr 'a-z' 'A-Z')
+                  (( _qA_changed = 1 ))
+                fi
+                ;;
+    schema)     if [[ "${_clpsc_schema}" != "${_qA_schema}" ]]; then
+	          _clpsc_schema=$(echo ${_qA_schema} | tr 'a-z' 'A-Z')
+                  (( _qA_changed = 1 ))
+                fi
+                ;;
+    trace)      if [[ _scmacro_trc -ne ${_qA_trace} ]]; then
+                  (( _scmacro_trc = ${_qA_trace} ))
+                  (( _qA_changed = 1 ))
+                fi
+                #echo "export _scmacro_trc=${_scmacro_trc}" >> "${_clpsc_configdir}/tmp/${_scmacro_name_base}.tmp"
+                ;;
+    show)       showParams
+                #(( _scmacro_loop = 1 ))
+                ;;
+    done)       (( _scmacro_loop = 1 ))
+                ;;
+    *)          (( _qA_rc = 1 )) ;;
   esac
 
   # any settings changed ? if so, write a tmp settings file
   if [[ _qA_changed -eq 1 ]]; then
     {
+      echo "_clpsc_dbinstance=\"${_clpsc_dbinstance}\""
       echo "_clpsc_dbname=\"${_clpsc_dbname}\""
       echo "_clpsc_schema=\"${_clpsc_schema}\""
       echo "(( _scmacro_trc = ${_scmacro_trc} ))"

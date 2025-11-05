@@ -20,7 +20,7 @@ awkprog="/usr/bin/gawk"
 
 # awk script to convert from Db2 CLP to sc
 #tab2sc=DB2tab2sc.awk
-tab2sc=DB2tab2sc_v0.9.8.002.awk
+tab2sc=DB2tab2sc_v0.9.8.003.awk
 
 # default trace directory
 trc_path="${_clpsc_configdir}/Logs"

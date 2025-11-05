@@ -7,7 +7,7 @@
 
 #set -x
 _clpsc_prog="${0##*/}"             # name of the script
-_clpsc_version_number="0.9.8.2"
+_clpsc_version_number="0.9.8.3"
 # env var CLPSCDIR indicates an alternative config directory
 _clpsc_configdir="${CLPSCDIR-${HOME}/.clpsc}"
 export _clpsc_configdir
@@ -44,6 +44,7 @@ _clpsc_scopts=""
 set -A _clpsc_clpoptsA --
 
 _clpsc_if="none"
+_clpsc_plugin=""
 
 if [[ -f ${_clpsc_configdir}/clpscrc ]]; then
   . ${_clpsc_configdir}/clpscrc
@@ -173,10 +174,11 @@ AssignOptValue ()
                    ;;
     scexecpath)    _clpsc_displayExe="${_clpsc_scexecpath}"
                    ;;
+    plugin)        ;;
     if)            if [[ -z ${_clpsc_if} ]]; then
                      print -- "[ERROR] [${_clpsc_prog}] No input file specified ..."
                      (( _clpsc_rc = 1 ))
-                   elif [[ ! -f ${_clpsc_if} ]]; then
+                   elif [[ ! -f ${_clpsc_if} && ${_clpsc_if} != "-" ]]; then
                      print -- "[ERROR] [${_clpsc_prog}] Input file does not exist, or is not an ordinary file ..."
                      (( _clpsc_rc = 1 ))
                    fi
@@ -283,10 +285,16 @@ if [[ "${_clpsc_if}" = "none" ]]; then
     print -- "[${_clpsc_prog}] "
     print -- "[${_clpsc_prog}] ERROR: I have no info what to display ... "
     print -- "[${_clpsc_prog}] "
+  elif [[ -n ${_clpsc_plugin} ]]; then
+    # run Db2 CLP
+    db2 "${_clpsc_clpoptsA[@]}" "${@}" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" - | "${_clpsc_convTool}" -f "${_clpsc_plugin}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
   else
     # run Db2 CLP
     db2 "${_clpsc_clpoptsA[@]}" "${@}" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
   fi
+elif [[ -n ${_clpsc_plugin} ]]; then
+  # read in from an input file
+  "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" "${_clpsc_if}" | "${_clpsc_convTool}" -f "${_clpsc_plugin}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
 else
   # read in from an input file
   "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" "${_clpsc_if}" | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
