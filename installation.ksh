@@ -72,6 +72,14 @@ print -- "Copy script ... \c"
 ( cd "${_instDir}" && cp -p TOOLS/clpsc.ksh "${_binDir}" )
 print -- "done"
 
+# local installation
+if [[ $(id -u) -ne 0 ]]; then
+  print -- "\nCreating directories for non-root installation ... \n"
+  mkdir -p "${_configDir}/LocalMacros"
+  mkdir -p "${_configDir}/Logs"
+  mkdir -p "${_configDir}/tmp"
+fi
+
 print -- " "
 print -- "Set permissions ... \c"
 chmod 755 "${_configDir}/Macros/"*
