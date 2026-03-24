@@ -7,7 +7,7 @@
 
 #set -x
 _clpsc_prog="${0##*/}"             # name of the script
-_clpsc_version_number="0.9.8.3"
+_clpsc_version_number="0.9.8.4"
 # env var CLPSCDIR indicates an alternative config directory
 _clpsc_configdir="${CLPSCDIR-${HOME}/.clpsc}"
 export _clpsc_configdir
@@ -174,7 +174,8 @@ AssignOptValue ()
                    ;;
     scexecpath)    _clpsc_displayExe="${_clpsc_scexecpath}"
                    ;;
-    plugin)        ;;
+    postproc)      ;;
+    pprocargs)     ;;
     if)            if [[ -z ${_clpsc_if} ]]; then
                      print -- "[ERROR] [${_clpsc_prog}] No input file specified ..."
                      (( _clpsc_rc = 1 ))
@@ -274,6 +275,12 @@ print --
 # export variables to be used by macros
 export _clpsc_dbinstance _clpsc_dbname _clpsc_schema _clpsc_toolpath _clpsc_convopts _clpsc_tab2sc
 
+if [[ -n ${_clpsc_pprocargs} ]]; then
+  set -A _clpsc_pprocargsA -- $(print -- "${_clpsc_pprocargs}" | tr ':' ' ')
+else
+  set -A _clpsc_pprocargsA --
+fi
+
 set -o pipefail
 set -o verbose
 set -x
@@ -285,16 +292,16 @@ if [[ "${_clpsc_if}" = "none" ]]; then
     print -- "[${_clpsc_prog}] "
     print -- "[${_clpsc_prog}] ERROR: I have no info what to display ... "
     print -- "[${_clpsc_prog}] "
-  elif [[ -n ${_clpsc_plugin} ]]; then
+  elif [[ -n ${_clpsc_postproc} ]]; then
     # run Db2 CLP
-    db2 "${_clpsc_clpoptsA[@]}" "${@}" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" - | "${_clpsc_convTool}" -f "${_clpsc_plugin}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
+    db2 "${_clpsc_clpoptsA[@]}" "${@}" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" - | "${_clpsc_convTool}" -f "${_clpsc_postproc}" "${_clpsc_pprocargsA[@]}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
   else
     # run Db2 CLP
     db2 "${_clpsc_clpoptsA[@]}" "${@}" | "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
   fi
-elif [[ -n ${_clpsc_plugin} ]]; then
+elif [[ -n ${_clpsc_postproc} ]]; then
   # read in from an input file
-  "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" "${_clpsc_if}" | "${_clpsc_convTool}" -f "${_clpsc_plugin}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
+  "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" "${_clpsc_if}" | "${_clpsc_convTool}" -f "${_clpsc_postproc}" "${_clpsc_pprocargsA[@]}" - | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"
 else
   # read in from an input file
   "${_clpsc_convTool}" -f "${_clpsc_toolpath}/${_clpsc_tab2sc}" "${_clpsc_convA[@]}" "${_clpsc_if}" | ${_clpsc_displayExe} "${_clpsc_displayExeA[@]}"

@@ -2,45 +2,14 @@
 
 #_scmacro_trc=1
 . $(dirname $0)/macro_default.ksh
+_scmacro_version="0.9.8.004"
 
-_sc_thisMacro_config="${_clpsc_configdir}/genDiffData.config"
+# set the macro config file - either the default, or the 1st argument
+_sc_thisMacro_config="${1:-${_clpsc_configdir}/genDiffData.config}"
 if [[ ! -f ${_sc_thisMacro_config} ]]; then
   errorMsg "${0}: config '${_sc_thisMacro_config}' does not exist"
   exit -1
 fi
-
-function getSection
-{
-  if [[ $# -lt 2 ]]; then
-    errorMsg "Incorrect number of args in $0"
-    return 1
-  fi
-  awk 'BEGIN{p=0}
-       {
-         # ignore lines with comment
-         if( index($1,"#") == 1){next}
-         # get section identifiers
-         n = split($0,a,/[\[\]]/,seps)
-         if(n == 3 && seps[1] == "[" && seps[2] == "]"){
-           sub(/^[[:blank:]]*/,"",a[2])
-           sub(/[[:blank:]]*$/,"",a[2])
-           # printf "a[2] = %s\n",a[2]
-           # if this is the desired section, ensure it is printed
-           if( a[2] == sectionName ){p = 1}  # print the section content
-           else                     {p = 0}  # ignore the section
-         } else if( NF > 0 ){
-           if( $1 == "#" ){ next }
-           else if( p == 1 ){
-             s = $0
-             sub(/^[[:blank:]]*/,"",s)
-             sub(/[[:blank:]]*$/,"",s)
-             print s
-           }
-         }
-       }' sectionName="$1" "$2"
-
-  return 0
-}
 
 function isNumCol
 {
@@ -163,6 +132,8 @@ function nextCol
 if [[ _scmacro_trc -gt 0 ]]; then
   rm -f "${_scmacro_trc_path}"
   touch "${_scmacro_trc_path}"
+  traceMacro "CLPSC Macro: $(basename $0)"
+  traceMacro "    Version: ${_scmacro_version}"
 fi
 
 (( _rowGapBetweenData = 5 ))

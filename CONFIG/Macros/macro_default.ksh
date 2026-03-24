@@ -21,6 +21,12 @@ _scmacro_trc=${_scmacro_trc-0}
 (( _scmacro_trc = ${_scmacro_trc} ))
 _scmacro_trc_dir="${_scmacro_trc_dir-${_clpsc_configdir}/Logs}"
 _scmacro_trc_path="${_scmacro_trc_dir}/${_scmacro_name_base}.trc"
+# write a repro script ?
+_scmacro_script=${_scmacro_script-0}
+(( _scmacro_script = ${_scmacro_script} ))
+# path to write a repro script
+_scmacro_script_path="${_scmacro_trc_dir}/${_scmacro_name_base}.script"
+rm -rf "${_scmacro_script_path}"
 
 # after having set the defaults, read in the config
 . "${_clpsc_configdir}/clpscrc"
@@ -64,6 +70,15 @@ sendCmd()
 {
   echo "$@"
   traceMacro 3 "Sending:    '$@'"
+  if [[ _scmacro_script -gt 0 ]]; then
+    if [[ "$1" = "seval "*   ||
+          "$1" = "eval"*     ||
+          "$1" = "get"* ]]; then
+      traceMacro 4 "Do not put '$@' into the script"
+    else
+      echo "$@" >> "${_scmacro_script_path}"
+    fi
+  fi
 }
 
 readResponse()
@@ -97,6 +112,39 @@ col2colno()
   _colno=$(echo "$1" | awk 'BEGIN{for(i=0;i<256;i++){ ord[sprintf("%c",i)]=i }}{s=$1;for(i=1;i<=length(s);i++){n=(n*(26^(i-1)))+((ord[substr(s,i,1)]-64))}}END{printf "%d\n",n}' -)
   traceMacro "Col: '$1', Colno = '${_colno}'"
   echo "${_colno}"
+}
+
+function getSection
+{
+  if [[ $# -lt 2 ]]; then
+    errorMsg "Incorrect number of args in $0"
+    return 1
+  fi
+  awk 'BEGIN{p=0}
+       {
+         # ignore lines with comment
+         if( index($1,"#") == 1){next}
+         # get section identifiers
+         n = split($0,a,/[\[\]]/,seps)
+         if(n == 3 && seps[1] == "[" && seps[2] == "]"){
+           sub(/^[[:blank:]]*/,"",a[2])
+           sub(/[[:blank:]]*$/,"",a[2])
+           # printf "a[2] = %s\n",a[2]
+           # if this is the desired section, ensure it is printed
+           if( a[2] == sectionName ){p = 1}  # print the section content
+           else                     {p = 0}  # ignore the section
+         } else if( NF > 0 ){
+           if( $1 == "#" ){ next }
+           else if( p == 1 ){
+             s = $0
+             sub(/^[[:blank:]]*/,"",s)
+             sub(/[[:blank:]]*$/,"",s)
+             print s
+           }
+         }
+       }' sectionName="$1" "$2"
+
+  return 0
 }
 
 setAllColours()
@@ -249,6 +297,11 @@ showParams()
   sendMsg "dbinstance=${_clpsc_dbinstance} dbname=${_clpsc_dbname} schema=${_clpsc_schema} trace=${_scmacro_trc}"
 }
 
+# use defaults set
+_scmacro_settings="${_clpsc_configdir}/MacroDefaults"
+if [[ -f ${_scmacro_settings} ]]; then
+  . ${_scmacro_settings}
+fi
 # use temporary default if available
 _ppid=$(findPPID)
 _scmacro_tmpsettings="${_clpsc_configdir}/tmp/MacroDefaults_${_ppid}.tmp"
