@@ -2,45 +2,14 @@
 
 #_scmacro_trc=1
 . $(dirname $0)/macro_default.ksh
+_scmacro_version="0.9.8.004"
 
-_sc_thisMacro_config="${_clpsc_configdir}/genDiffData.config"
+# set the macro config file - either the default, or the 1st argument
+_sc_thisMacro_config="${1:-${_clpsc_configdir}/genDiffData.config}"
 if [[ ! -f ${_sc_thisMacro_config} ]]; then
   errorMsg "${0}: config '${_sc_thisMacro_config}' does not exist"
   exit -1
 fi
-
-function getSection
-{
-  if [[ $# -lt 2 ]]; then
-    errorMsg "Incorrect number of args in $0"
-    return 1
-  fi
-  awk 'BEGIN{p=0}
-       {
-         # ignore lines with comment
-         if( index($1,"#") == 1){next}
-         # get section identifiers
-         n = split($0,a,/[\[\]]/,seps)
-         if(n == 3 && seps[1] == "[" && seps[2] == "]"){
-           sub(/^[[:blank:]]*/,"",a[2])
-           sub(/[[:blank:]]*$/,"",a[2])
-           # printf "a[2] = %s\n",a[2]
-           # if this is the desired section, ensure it is printed
-           if( a[2] == sectionName ){p = 1}  # print the section content
-           else                     {p = 0}  # ignore the section
-         } else if( NF > 0 ){
-           if( $1 == "#" ){ next }
-           else if( p == 1 ){
-             s = $0
-             sub(/^[[:blank:]]*/,"",s)
-             sub(/[[:blank:]]*$/,"",s)
-             print s
-           }
-         }
-       }' sectionName="$1" "$2"
-
-  return 0
-}
 
 function isNumCol
 {
@@ -99,17 +68,20 @@ function isCounterCol
   fi
   isNumCol $2
   (( _rc = $? ))
-  # if this is not a numeric column, then it's no counter column
   if [[ _rc -eq 0 ]]; then
     return $_rc
   fi
+  checkColType $2
+  (( _rc = $? ))
+  traceMacro "checkColType $2 returned ${_rc}"
 
   _checkColName="$1"
   set -A _noDiffColsA -- $(getSection NoDiffValues "${_sc_thisMacro_config}")
   (( _i = 0 ))
   while [[ _i -le ${#_noDiffColsA[@]} ]]; do
+    traceMacro 3 "compare '${_checkColName}' with '${_noDiffColsA[_i]}'"
     if [[ "${_noDiffColsA[_i]}" = "${_checkColName}" ]]; then
-      #return $_rc
+      traceMacro 3 "Column '${_noDiffColsA[_i]}' configured to be no counter col ..."
       return 0
     fi
     (( _i = _i + 1 ))
@@ -163,6 +135,8 @@ function nextCol
 if [[ _scmacro_trc -gt 0 ]]; then
   rm -f "${_scmacro_trc_path}"
   touch "${_scmacro_trc_path}"
+  traceMacro "CLPSC Macro: $(basename $0)"
+  traceMacro "    Version: ${_scmacro_version}"
 fi
 
 (( _rowGapBetweenData = 5 ))
@@ -266,6 +240,11 @@ set -A _groupByColsA -- $(getSection GroupByCols "${_sc_thisMacro_config}")
 traceMacro "_headerRow: ${_headerRow}, _numOEndCol = ${_numOEndCol}, _addrOEndCol = ${_addrOEndCol}"
 _sort_advice=""
 while [[ _i -le _numOEndCol ]]; do
+  #(( _mod = fmod( ( ( _i * 100 ) / _numOEndCol ), 10 ) ))
+  #if [[ _mod -eq 0 ]]; then
+  #  sendMsg "Checking columns ($(( ( ( _i * 100 ) / _numOEndCol ) )) %) ..."
+  #  sendCmd "redraw"
+  #fi
   sendCmd "seval @coltoa(${_i})"
   _response="$(readResponse)"
   _this_colID="${_response}"
@@ -390,8 +369,12 @@ while [[ _colNo -le _colMaxNo ]]; do
   #sendCmd "getstring ${_dataCol}${_prvDBR}"
   sendCmd "getstring ${_col}${_newHeaderRow}"
   _headerName=$(readResponse)
-  isCounterCol "${_headerName}" ${_col}${_newIBegRow}:${_col}${_newOEndRow}
-  _isCounterCol=$?
+  if [[ "${_headerName}" = "TIME_SEC" || "${_headerName}" = "TIMEDIFF" ]]; then 
+    (( _isCounterCol = 1 ))
+  else
+    isCounterCol "${_headerName}" ${_col}${_newIBegRow}:${_col}${_newOEndRow}
+    _isCounterCol=$?
+  fi
   if [[ _isCounterCol -eq 1 ]]; then
     traceMacro "Col ${_col} (${_colNo}) is a counter column"
     sendMsg "Calculating diffs [column ${_col}/${_addrOEndCol}] ..."
@@ -417,27 +400,6 @@ while [[ _colNo -le _colMaxNo ]]; do
       fi
       (( _i = _i + 1 ))
     done
-  #else
-    #sendMsg "Referring to source cells [column ${_col}] ..."
-    #sendCmd "redraw"
-    #isNumCol "${_headerName}" ${_col}${_newIBegRow}:${_col}${_newOEndRow}
-    #(( _isNumCol = $? ))
-    #(( _i = 0 ))
-    #while [[ _i -le _frameVISize ]]; do
-    #  (( _curDBR = _newIBegRow + _i ))
-    #  (( _curCDR = _addrIBegRow + _i ))
-    #  sendCmd "getnum ${_col}${_curCDR}"
-    #  _curVal=$(readResponse)
-    #  if [[ -n "${_curVal}" ]]; then
-    #    if [[ ${_col} = ${_addrOBegCol} ]]; then
-    #      sendCmd "let ${_col}${_curCDR} = ${_col}${_curDBR}-${_col}${_prvDBR}"
-    #    else
-    #      #sendCmd "let ${_col}${_curCDR} = @if((${_addrOBeg}>0),((${_col}${_curDBR}-${_col}${_prvDBR})/${_addrOBegCol}${_curCDR})*${_addrOBeg},(${_col}${_curDBR}-${_col}${_prvDBR}))"
-    #      sendCmd "let ${_col}${_curCDR} = (${_col}${_curDBR}-${_col}${_prvDBR})*@if((${_addrOBeg}>0),${_addrOBeg}/${_addrOBegCol}${_curCDR},1)"
-    #    fi
-    #  fi
-    #  (( _i = _i + 1 ))
-    #done
   fi
   (( _colNo = _colNo + 1 ))
   sendCmd "seval @coltoa(${_colNo})"
