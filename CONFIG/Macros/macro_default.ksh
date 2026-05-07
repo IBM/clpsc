@@ -110,7 +110,7 @@ readResponse()
 
 sendMsg()
 {
-  echo "error \"$@\""
+  echo "error \"[${_scmacro_name}] $@\""
   traceMacro "Message:    '$@'"
 }
 
