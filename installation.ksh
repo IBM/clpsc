@@ -15,6 +15,12 @@ _binDirRoot="/usr/local/bin"
 #_scPath="/usr/local/bin/sc"
 _scPath=""
 
+if [[ $# -gt 0 ]] then
+  if [[ $1 = "user" ]]; then
+    _instType="user"
+  fi
+fi
+
 print -- " "
 print -- "Installation procedure for 'clpsc' - a wrapper fo the Db2 CLP."
 print -- " "
@@ -44,7 +50,14 @@ fi
 print -- "Using executable '${_scPath}' ..."
 
 if [[ $(id -u) -eq 0 ]]; then
-  print -- "\nInstallation as 'root' ... \n"
+  _instType="${_instType-system}"
+else
+  _instType="user"
+fi
+if [[ ${_instType} = "user" ]]; then
+  print -- "\nUser Installation ... \n"
+elif [[ ${_instType} = "system" ]]; then
+  print -- "\nSystem Installation ... \n"
   _configDir="${_configDirRoot}"
   _binDir="${_binDirRoot}"
 fi
